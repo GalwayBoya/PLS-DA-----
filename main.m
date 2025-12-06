@@ -6,8 +6,10 @@ clear all;
 clc;
 
 % 参数设置
-A = 10;
-K = 5;
+% A = 10; % 计算10个潜变量（主成分）
+A = 3; 
+% K = 5;
+K = 2;
 % 参数设置
 
 %%% 数据导入与预处理
@@ -84,6 +86,14 @@ for i_num_dataset = 1:num_dataset
     % 波长范围
     wavelength_start = 563;
     wavelength_end = 1110;
+
+    % --- 新增代码开始 ---
+    % 自动计算最接近目标波长的索引位置
+    [~, location_wavelength_start] = min(abs(wavelength - wavelength_start));
+    [~, location_wavelength_end] = min(abs(wavelength - wavelength_end));
+    mean_sample_all_spectra_all = []; % 存储所有样本的平均光谱数据
+    matrix_white_reference = [];      % 存储所有样本的白参考光谱数据
+    % --- 新增代码结束 ---
   
     % 去除起始和结束的光谱点比例
     num_start = 0;
@@ -97,62 +107,67 @@ for i_num_dataset = 1:num_dataset
     for i=1:num_sample
     
         % 确定波长范围的索引
+        % 如果样本i为最后一个样本
         if i==num_sample
-            % 此处减1是因为最后一行是白参考光谱
-            ith_sample_spectra = data(data_interval(i)+1:end-1,location_wavelength_start:location_wavelength_end);    
-            % ??????
-            [Maxvalue,~] = max(ith_sample_spectra,[],2); %??????е?????
+            % 此样本的光谱数据从data_interval(i)+1行到倒数第2行,列限制在波长范围内
+            ith_sample_spectra = data(data_interval(i)+1:end-1,location_wavelength_start:location_wavelength_end); %  
+            % 找出每行的最大值
+            [Maxvalue,~] = max(ith_sample_spectra,[],2); 
+            % 删除行中最大值不在强度范围内的光谱
             DeletPointPosition = find(Maxvalue > str2double(intensity_end) | Maxvalue< str2double(intensity_start));
+            % DeletPointPosition = find(Maxvalue > intensity_end | Maxvalue < intensity_start);
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % ???????
-            Stvalue = ith_sample_spectra(:,10); %?????е??10?????????
-            DeletPointPosition = find(Stvalue > 10000);
+            % 找出第10列中大于30000的行
+            Stvalue = ith_sample_spectra(:,10); %第10列数据
+            DeletPointPosition = find(Stvalue > 30000);
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % ?????????
+            % 计算去除起始和结束的光谱点数量
             a = num_start;
             b = num_end;
-            num_spectra = size(ith_sample_spectra,1);
+            num_spectra = size(ith_sample_spectra,1); % 此样本有多少行光谱数据
     
+            % 如果a小于90，按百分比计算，否则按绝对值计算（比如a=5就是删前百分之五，a=500就是删前五行）
             if a < 90
                 num_start_d = floor(num_spectra*a/100);
             else
                 num_start_d = floor(a/100);
             end
-    
+            % 同a
             if b < 90
                 num_end_d = floor(num_spectra*b/100);
             else
                 num_end_d = floor(b/100);
             end
-    
+            % 处理后的光谱数据
             ith_sample_spectra_ex = ith_sample_spectra(num_start_d+1:num_spectra-num_end_d,:);
     
-            % ?????
+            % 计算出此样本的平均光谱，把多行光谱数据平均成一行
             mean_sample_all_spectra(i,:) = mean(ith_sample_spectra_ex,1);
             
-            % ???ο?
+            % 白参考光谱
             white_reference(i,:) = data(end,location_wavelength_start:location_wavelength_end); 
   
         else
-            % ???????????????β?ο?
+            % 如果不是最后一个样本
+            % 此样本的光谱数据从data_interval(i)+1行到data_interval
             ith_sample_spectra =  data(data_interval(i)+1:data_interval(i+1)-2,location_wavelength_start:location_wavelength_end);    
-            % ??????
-            [Maxvalue,~] = max(ith_sample_spectra,[],2); %??????е?????
+            % 找出每行的最大值
+            [Maxvalue,~] = max(ith_sample_spectra,[],2);  % 每行最大值
             DeletPointPosition = find(Maxvalue > str2double(intensity_end) | Maxvalue< str2double(intensity_start));
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % ???????
-            Stvalue = ith_sample_spectra(:,10); %?????е??10?????????
-            DeletPointPosition = find(Stvalue > 10000);
+            % 剔除第10列中大于30000的行
+            Stvalue = ith_sample_spectra(:,10); %第10列数据
+            DeletPointPosition = find(Stvalue > 30000);
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % ?????????
+            % 计算去除起始和结束的光谱点数量
             a = num_start;
             b = num_end;
             num_spectra = size(ith_sample_spectra,1);
@@ -171,10 +186,10 @@ for i_num_dataset = 1:num_dataset
     
             ith_sample_spectra_ex = ith_sample_spectra(num_start_d+1:num_spectra-num_end_d,:);
         
-            % ?????
+            % 计算出此样本的平均光谱，把多行光谱数据平均成一行
             mean_sample_all_spectra(i,:) = mean(ith_sample_spectra_ex,1);
             
-            % ???ο?
+            % 白参考光谱
             white_reference(i,:) = data(data_interval(i+1)-1,location_wavelength_start:location_wavelength_end); 
   
         end
@@ -184,44 +199,53 @@ for i_num_dataset = 1:num_dataset
     
     mean_sample_all_spectra_all= [mean_sample_all_spectra_all; mean_sample_all_spectra];
     mean_sample_all_spectra = [];
-    matrix_white_reference = [ matrix_white_reference; white_reference];
+    matrix_white_reference = [matrix_white_reference; white_reference];
     white_reference = [];
 end
 
-% ???????????
-Xpreprocess = mean_sample_all_spectra;
+% %%% 光谱预处理
+Xpreprocess = mean_sample_all_spectra_all;
 
-%%% ??????????
-segment = 29;   % ???????????
-Xpreprocess = average_moving(Xpreprocess,str2double(segment));
+%%% 移动平均滤波
+% segment = 29;   % 滤波窗口大小
+segment = 3;   % 滤波窗口大小
+% Xpreprocess = average_moving(Xpreprocess,str2double(segment));
+Xpreprocess = average_moving(Xpreprocess,segment);
      
-%%% ?????????
+%%% 归一化
 [~, ~,~,~,Xpreprocess,~]=Normalize(Xpreprocess,Xpreprocess);
      
-%%% ??????????????????
-% 1?????????,7???ù????
-num_normal = find(Y==1);  % ???????1??????????
-num_moldy = find(Y==7);   % ???????7??????????
-X_normal = Xpreprocess(num_normal,:);  % ???????1?????????  
-Y_normal = Y(num_normal,:);            % ???????1????????      
-X_moldy = Xpreprocess(num_moldy,:);    % ???????7?????????
-Y_moldy = Y(num_moldy,:);              % ???????7????????
+%%% 分类别处理
+% 1类样本,7类样本
+num_normal = find(Y==1);  % 正常样本1类别
+num_moldy = find(Y==7);   % 霉变样本7类别
+X_normal = Xpreprocess(num_normal,:);  % 正常样本1类别数据  
+Y_normal = Y(num_normal,:);            % 正常样本1类别标签      
+X_moldy = Xpreprocess(num_moldy,:);    % 霉变样本7类别数据
+Y_moldy = Y(num_moldy,:);              % 霉变样本7类别标签
 
-% ??????????????ù??????30?????????????????????????  
+% 如果正常样本数量比霉变样本多30个以上，则只取霉变样本数量的正常样本
 if length(num_normal)>length(num_moldy)+30
     X_normal_part = X_normal(1:length(num_moldy),:);
     Y_normal_part = Y_normal(1:length(num_moldy));
     X = [X_normal_part;X_moldy];
     Y = [Y_normal_part;Y_moldy];
 else
+    % 强制截取霉变样本，使其数量等于正常样本的数量
     X_moldy_part = X_moldy(1:length(num_normal),:);
     Y_moldy_part = Y_moldy(1:length(num_normal));
     X = [X_normal;X_moldy_part];
     Y = [Y_normal;Y_moldy_part];
 end
+
+% 检查逻辑
+disp(['X的大小: ', num2str(size(X))]);
+disp(['Y的大小: ', num2str(size(Y))]);
+% 检查逻辑
   
-% PLSDA???????
-CV = plsdacv_app(X,Y,str2double(A),K);
+% %%% PLS-DA模型建立与预测
+% CV = plsdacv_app(X,Y,str2double(A),K);
+CV = plsdacv_app(X,Y,A,K);
 classificationresult = CV.result;
 n = CV.optLV;
   
