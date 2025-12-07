@@ -6,10 +6,10 @@ clear all;
 clc;
 
 % 参数设置
-% A = 10; % 计算10个潜变量（主成分）
-A = 3; 
-% K = 5;
-K = 2;
+A = 10; % 计算10个潜变量（主成分）
+% A = 3; 
+K = 5;
+% K = 2;
 % 参数设置
 
 %%% 数据导入与预处理
@@ -29,12 +29,12 @@ for i = 3:num_file
       j = j+1;
    end
 end
-%%% Mes开头的文件数量
+%%% Mes_开头的文件数量
 num_mes_file  = (j);   
 
 
 % 选择特定的数据集
-selected_str = {'Data_fuji apple_2021_12_24_13_16_32.csv'};
+selected_str = {'Data_6-8-7-P1-P3.csv'};
 num_dataset = length(selected_str);  
 
 % 光谱数据预处理参数
@@ -75,7 +75,7 @@ for i_num_dataset = 1:num_dataset
     % 光谱数据文件绝对路径
     str = [SamplePath '\' selected_str{i_num_dataset}]; 
     % 跳过前12行，和第1列，读取光谱数据
-    data = csvread(str,12,1);  
+    data = csvread(str,13,1);  
     wavelength = data(1,:);    % 波长信息
     data_col_1 = sum(data,2);  % 数据每行的和
     data_interval = find(data_col_1 == 0);  % 找到和为0的行
@@ -161,9 +161,9 @@ for i_num_dataset = 1:num_dataset
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % 剔除第10列中大于30000的行
+            % 剔除第10列中大于10000的行
             Stvalue = ith_sample_spectra(:,10); %第10列数据
-            DeletPointPosition = find(Stvalue > 30000);
+            DeletPointPosition = find(Stvalue > 10000);
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
@@ -207,8 +207,8 @@ end
 Xpreprocess = mean_sample_all_spectra_all;
 
 %%% 移动平均滤波
-% segment = 29;   % 滤波窗口大小
-segment = 3;   % 滤波窗口大小
+segment = 29;   % 滤波窗口大小
+% segment = 3;   % 滤波窗口大小
 % Xpreprocess = average_moving(Xpreprocess,str2double(segment));
 Xpreprocess = average_moving(Xpreprocess,segment);
      

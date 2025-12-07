@@ -95,4 +95,10 @@ error=YR-repmat(y,1,A);   % 预测值减去真值
 %   CV.RMSECV_min=RMSEP;
 %   CV.optLV=index;
 %   CV.r=r_cv(1,2);
+
+% ----- 改动 -----
+%   CV.RMSECV_min=RMSEP;
+  CV.optLV=index;
+%   CV.r=r_cv(1,2);
+% ----- 改动 -----
 end
