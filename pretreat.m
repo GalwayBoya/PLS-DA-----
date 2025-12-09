@@ -1,4 +1,4 @@
-% 预处理数据矩阵X
+% 预处理数据矩阵X(所有数据减去均值)
 function [X,para1,para2]=pretreat(X,method,para1,para2)
 % X:原始数据矩阵、method:预处理方法、para1,para2:预处理参数
 %+++   data pretreatment

@@ -216,6 +216,13 @@ Xpreprocess = average_moving(Xpreprocess,segment);
 %%% 归一化
 % 所有值除以各自行的范数（最大值）
 [~, ~,~,~,Xpreprocess,~]=Normalize(Xpreprocess,Xpreprocess);
+
+% --- 新增代码：获取完整的标签向量，用于后续作为预测集的真值 ---
+Y_all = statistics_all(:,3); 
+% 如果是单文件运行，此时Y变量可能已经是完整的，但为了保险起见，使用statistics_all
+% 确保用于分类筛选的Y也是完整的（防止多文件读取时的bug）
+Y = Y_all; 
+% --- 新增代码结束 ---
      
 %%% 分类别处理
 % 1类样本,7类样本
@@ -256,5 +263,6 @@ predicted_value_Y = CV.YR_original(:,n);
   
 % PLS-DA模型建立与预测
 error_specific = 0.5;  % 错误容忍度
-[result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y,error_specific);
+% [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y,error_specific);
+[result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y_all,error_specific);
 display('PLS-DA模型建立与预测完成');
