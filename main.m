@@ -264,5 +264,101 @@ predicted_value_Y = CV.YR_original(:,n);
 % PLS-DA模型建立与预测
 error_specific = 0.5;  % 错误容忍度
 % [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y,error_specific);
-[result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y_all,error_specific);
+% [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y_all,error_specific);
+[result, result_ud, model, matrix_num_delet, Y_pred_all_matrix] = C_get_pls_da_model_all_APP(X, Y, Xpreprocess, Y_all, error_specific); % 捕获所有输出参数
+
 display('PLS-DA模型建立与预测完成');
+
+%% === 结果展示部分 ===
+
+% 1. 文本输出：详细统计指标
+fprintf('\n==================== PLS-DA 模型结果报告 ====================\n');
+fprintf('最佳潜变量数 (LV): %d\n', n);
+fprintf('错误容忍度 (Error Threshold): %.2f\n', error_specific);
+
+% 提取最佳 LV 下的各项指标
+% result 矩阵行定义: 1:校正集正常灵敏度, 2:校正集水脱特异度, 3:校正集总准确率
+%                   4:预测集正常灵敏度, 5:预测集水脱特异度, 6:预测集总准确率
+res_cal_sens = result(1, n) * 100;
+res_cal_spec = result(2, n) * 100;
+res_cal_acc  = result(3, n) * 100;
+
+res_pred_sens = result(4, n) * 100;
+res_pred_spec = result(5, n) * 100;
+res_pred_acc  = result(6, n) * 100;
+
+fprintf('\n--- 1. 校正集性能 (平衡后的训练数据) ---\n');
+fprintf('正常果识别率 (Sensitivity): %.2f%%\n', res_cal_sens);
+fprintf('水脱果识别率 (Specificity): %.2f%%\n', res_cal_spec);
+fprintf('总准确率 (Accuracy)       : %.2f%%\n', res_cal_acc);
+
+fprintf('\n--- 2. 预测集性能 (所有原始数据) ---\n');
+fprintf('正常果识别率 (Sensitivity): %.2f%%\n', res_pred_sens);
+fprintf('水脱果识别率 (Specificity): %.2f%%\n', res_pred_spec);
+fprintf('总准确率 (Accuracy)       : %.2f%%\n', res_pred_acc);
+
+% 剔除异常点后的结果
+% result_ud 矩阵行定义: 1:剔除数量, 2:灵敏度, 3:特异度, 4:总准确率
+num_deleted = result_ud(1, n);
+res_ud_sens = result_ud(2, n) * 100;
+res_ud_spec = result_ud(3, n) * 100;
+res_ud_acc  = result_ud(4, n) * 100;
+
+fprintf('\n--- 3. 剔除异常点后的预测性能 ---\n');
+fprintf('剔除样本数量              : %d\n', num_deleted);
+fprintf('正常果识别率 (Sensitivity): %.2f%%\n', res_ud_sens);
+fprintf('水脱果识别率 (Specificity): %.2f%%\n', res_ud_spec);
+fprintf('总准确率 (Accuracy)       : %.2f%%\n', res_ud_acc);
+fprintf('=============================================================\n');
+
+%% 2. 图形输出：可视化结果
+
+% 图1：交叉验证准确率随潜变量数的变化
+figure('Name', 'CV Accuracy vs LV', 'Color', 'w');
+plot(1:A, CV.result(3,:) * 100, '-bo', 'LineWidth', 1.5, 'MarkerFaceColor', 'b');
+hold on;
+plot(n, CV.result(3,n) * 100, 'rp', 'MarkerSize', 12, 'MarkerFaceColor', 'r'); % 标记最佳点
+xlabel('潜变量个数 (Latent Variables)');
+ylabel('交叉验证准确率 (%)');
+title(['交叉验证结果 (最佳 LV = ' num2str(n) ')']);
+grid on;
+legend('准确率曲线', '最佳LV');
+
+% 图2：预测集分类效果散点图
+Y_pred_final = Y_pred_all_matrix(:, n); % 获取最佳LV下的预测值
+idx_normal = find(Y_all == 1);
+idx_water = find(Y_all == 7);
+
+figure('Name', 'Prediction Results', 'Color', 'w');
+hold on;
+% 绘制正常果（真实值为1）的预测值
+plot(idx_normal, Y_pred_final(idx_normal), 'g.', 'MarkerSize', 10, 'DisplayName', '真实: 正常果');
+% 绘制水脱果（真实值为7）的预测值
+plot(idx_water, Y_pred_final(idx_water), 'r.', 'MarkerSize', 10, 'DisplayName', '真实: 水脱果');
+
+% 绘制阈值线
+yline(4, 'k--', 'LineWidth', 1.5, 'DisplayName', '分类阈值 (4)');
+yline(1, 'g:', 'LineWidth', 0.5, 'HandleVisibility', 'off'); % 参考线1
+yline(7, 'r:', 'LineWidth', 0.5, 'HandleVisibility', 'off'); % 参考线7
+
+xlabel('样本编号');
+ylabel('模型预测值');
+title(['全样本预测结果 (准确率: ' num2str(res_pred_acc, '%.1f') '%)']);
+legend('Location', 'best');
+grid on;
+box on;
+
+% 图3：混淆矩阵 (基于预测集)
+% 将连续预测值转换为类别标签
+Y_pred_class = zeros(size(Y_all));
+Y_pred_class(Y_pred_final < 4) = 1;
+Y_pred_class(Y_pred_final >= 4) = 7;
+
+% 创建分类标签数组用于显示
+Y_true_categorical = categorical(Y_all, [1 7], {'正常', '水脱'});
+Y_pred_categorical = categorical(Y_pred_class, [1 7], {'正常', '水脱'});
+
+figure('Name', 'Confusion Matrix', 'Color', 'w');
+cm = confusionchart(Y_true_categorical, Y_pred_categorical);
+
+
