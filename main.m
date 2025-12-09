@@ -24,7 +24,7 @@ statistics_all = [];  % 存储所有样本的统计数据
 % 筛选Mes开头的文件名并去除前缀"Mes"
 for i = 3:num_file
    if strncmp(files(i).name,'Mes',3)
-      Str_mes{j+1} =  files(i).name(5:end); % 将文件名中前缀"Mes"去除后存入Str_mes数组
+      Str_mes{j+1} =  files(i).name(5:end); % 将文件名中前缀"Mes_"去除后存入Str_mes数组
       
       j = j+1;
    end
@@ -233,19 +233,42 @@ Y_normal = Y(num_normal,:);            % 正常样本1类别标签
 X_moldy = Xpreprocess(num_moldy,:);    % 霉变样本7类别数据
 Y_moldy = Y(num_moldy,:);              % 霉变样本7类别标签
 
-% 如果正常样本数量比霉变样本多30个以上，则只取霉变样本数量的正常样本
-if length(num_normal)>length(num_moldy)+30
-    X_normal_part = X_normal(1:length(num_moldy),:);
-    Y_normal_part = Y_normal(1:length(num_moldy));
+% 如果正常样本数量比水脱样本多30个以上，则只取霉变样本数量的正常样本
+% if-else就是判断语句了，如果符合if的条件，那么就进if的代码，不然就进else
+% if的条件↓，如果正常样本数量比水脱样本多30个以上，那么就把正常数据的量截取成和水脱数据的量一样多，这个叫下采样
+n_normal = length(num_normal)
+n_moldy = length(num_moldy)
+
+if n_normal > n_moldy % 如果正常的比水脱的多
+    X_normal_part = X_normal(1:n_moldy,:);
+    Y_normal_part = Y_normal(1:n_moldy);
     X = [X_normal_part;X_moldy];
     Y = [Y_normal_part;Y_moldy];
-else
-    % 强制截取霉变样本，使其数量等于正常样本的数量
-    X_moldy_part = X_moldy(1:length(num_normal),:);
-    Y_moldy_part = Y_moldy(1:length(num_normal));
+elseif n_normal < n_moldy % 如果正常的比水脱的少
+    X_moldy_part = X_moldy(1:n_normal,:);
+    Y_moldy_part = Y_moldy(1:n_normal);
     X = [X_normal;X_moldy_part];
     Y = [Y_normal;Y_moldy_part];
+else %如果二者一样多，直接合并
+    X = [X_normal ;X_moldy_part];
+    Y = [Y_normal;Y_moldy_part];
 end
+% if length(num_normal)>length(num_moldy)+30
+%     X_normal_part = X_normal(1:length(num_moldy),:);
+%     Y_normal_part = Y_normal(1:length(num_moldy));
+%     X = [X_normal_part;X_moldy];
+%     Y = [Y_normal_part;Y_moldy];
+% else
+%     % 那我们想想如果不符合“正常>水脱+30”这个条件，还会有哪些情况呢
+%     % 1.正常比水脱的多，但是没多到30
+%     % 2.正常比水脱的少
+%     % 而这里的else的代码是将水脱的样本截取到和正常的一样多，也就是没考虑1
+%     % 强制截取水脱样本，使其数量等于正常样本的数量
+%     X_moldy_part = X_moldy(1:length(num_normal),:);
+%     Y_moldy_part = Y_moldy(1:length(num_normal));
+%     X = [X_normal;X_moldy_part];
+%     Y = [Y_normal;Y_moldy_part];
+% end
 
 % 检查逻辑
 disp(['X的大小: ', num2str(size(X))]);
@@ -266,10 +289,10 @@ error_specific = 0.5;  % 错误容忍度
 % [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y,error_specific);
 % [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y_all,error_specific);
 [result, result_ud, model, matrix_num_delet, Y_pred_all_matrix] = C_get_pls_da_model_all_APP(X, Y, Xpreprocess, Y_all, error_specific); % 捕获所有输出参数
-
+% 到这里所有模型相关的代码就都结束啦
 display('PLS-DA模型建立与预测完成');
 
-%% === 结果展示部分 ===
+%% === 结果展示部分 ===这部分都是结果的显示，文本和绘图
 
 % 1. 文本输出：详细统计指标
 fprintf('\n==================== PLS-DA 模型结果报告 ====================\n');
