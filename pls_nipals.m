@@ -28,10 +28,17 @@ function [B,Wstar,T,P,Q,W,R2X,R2Y]=pls_nipals(X,Y,A)
 %# VERSION: 1.0 (24/11/2004)
 % moddification: preprocess parameter of the original code is removed by HDLi
 
+% X：光谱矩阵
+% Y：标签向量
+% A：潜变量个数
 
-
-
-
+% B：回归系数
+% W：X权重矩阵
+% T：得分矩阵
+% P：X载荷矩阵
+% Q：Y载荷矩阵
+% R2X：X的方差解释率
+% R2Y：Y的方差解释率
 
 [n,p]=size(X);
 

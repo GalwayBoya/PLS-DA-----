@@ -1,4 +1,6 @@
 % 归一化处理
+% 将所有样本的每个特征值除以该样本的范数（最大值），实现标准化归一化
+% 将所有样本的每个特征值映射到[0,1]区间，实现最小-最大归一化
 function [Xcal_normalize_std, Xpre_normalize_std,Xcal_normalize_minmax,Xpre_normalize_minmax,Xcal_normalize_max,Xpre_normalize_max]=Normalize(Xcal,Xpre)
 
   

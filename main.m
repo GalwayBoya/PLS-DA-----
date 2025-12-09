@@ -210,14 +210,16 @@ Xpreprocess = mean_sample_all_spectra_all;
 segment = 29;   % 滤波窗口大小
 % segment = 3;   % 滤波窗口大小
 % Xpreprocess = average_moving(Xpreprocess,str2double(segment));
+% 平滑处理（移动平均滤波）
 Xpreprocess = average_moving(Xpreprocess,segment);
-     
+
 %%% 归一化
+% 所有值除以各自行的范数（最大值）
 [~, ~,~,~,Xpreprocess,~]=Normalize(Xpreprocess,Xpreprocess);
      
 %%% 分类别处理
 % 1类样本,7类样本
-num_normal = find(Y==1);  % 正常样本1类别
+num_normal = find(Y==1);  % 正常样本1类别（哪些行）
 num_moldy = find(Y==7);   % 霉变样本7类别
 X_normal = Xpreprocess(num_normal,:);  % 正常样本1类别数据  
 Y_normal = Y(num_normal,:);            % 正常样本1类别标签      
@@ -252,6 +254,7 @@ n = CV.optLV;
 ture_value_Y = Y;
 predicted_value_Y = CV.YR_original(:,n);
   
-% PLS-DA??????????
-error_specific = 0.5;  % ???÷??????
+% PLS-DA模型建立与预测
+error_specific = 0.5;  % 错误容忍度
 [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y,error_specific);
+display('PLS-DA模型建立与预测完成');

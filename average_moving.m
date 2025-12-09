@@ -1,6 +1,5 @@
 % 对光谱数据进行移动平均平滑
-% average moving
-% segment为平滑点数
+% 有多少segment个点，就取前后各segment/2个点进行平均
 function Xmov=average_moving(X,segment)
 
 [m,n]=size(X);
