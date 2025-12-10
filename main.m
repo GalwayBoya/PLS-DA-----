@@ -6,7 +6,7 @@ clear all;
 clc;
 
 % 参数设置
-A = 10; % 计算10个潜变量（主成分）
+A = 10; % 计算10个潜变量（主成分） % A、K可以改，但是会复杂一点，涉及主成分分析，先不动吧
 % A = 3; 
 K = 5;
 % K = 2;
@@ -161,9 +161,9 @@ for i_num_dataset = 1:num_dataset
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % 剔除第10列中大于10000的行
-            Stvalue = ith_sample_spectra(:,10); %第10列数据
-            DeletPointPosition = find(Stvalue > 10000);
+            % 剔除第10列中大于30000的行
+            Stvalue = ith_sample_spectra(:,30); %第10列数据
+            DeletPointPosition = find(Stvalue > 30000);
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
@@ -223,7 +223,17 @@ Y_all = statistics_all(:,3);
 % 确保用于分类筛选的Y也是完整的（防止多文件读取时的bug）
 Y = Y_all; 
 % --- 新增代码结束 ---
-     
+ 
+% !!! 新增筛选：只保留标签为1(正常)和7(水脱)的样本，剔除中间值4，防止拉低总准确率 !!!
+valid_idx = find(Y_all == 1 | Y_all == 7);
+Y_all = Y_all(valid_idx);
+Xpreprocess = Xpreprocess(valid_idx, :);
+
+% 如果是单文件运行，此时Y变量可能已经是完整的
+Y = Y_all; 
+% --- 新增代码结束 ---
+% ...existing code...
+    
 %%% 分类别处理
 % 1类样本,7类样本
 num_normal = find(Y==1);  % 正常样本1类别（哪些行）
