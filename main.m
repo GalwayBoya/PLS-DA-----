@@ -6,7 +6,7 @@ clear all;
 clc;
 
 % 参数设置
-A = 10; % 计算10个潜变量（主成分）
+A = 10; % 计算10个潜变量（主成分） % A、K可以改，但是会复杂一点，涉及主成分分析，先不动吧
 % A = 3; 
 K = 5;
 % K = 2;
@@ -24,7 +24,7 @@ statistics_all = [];  % 存储所有样本的统计数据
 % 筛选Mes开头的文件名并去除前缀"Mes"
 for i = 3:num_file
    if strncmp(files(i).name,'Mes',3)
-      Str_mes{j+1} =  files(i).name(5:end); % 将文件名中前缀"Mes"去除后存入Str_mes数组
+      Str_mes{j+1} =  files(i).name(5:end); % 将文件名中前缀"Mes_"去除后存入Str_mes数组
       
       j = j+1;
    end
@@ -34,8 +34,11 @@ num_mes_file  = (j);
 
 
 % 选择特定的数据集
-selected_str = {'Data_6-8-7-P1-P3.csv'};
+selected_str = {'Data_10-1-41-P1-P3.csv','Data_6-8-7-P1-P3.csv'};
 num_dataset = length(selected_str);  
+
+mean_sample_all_spectra_all = []; % 存储所有样本的平均光谱数据
+matrix_white_reference = [];      % 存储所有样本的白参考光谱数据
 
 % 光谱数据预处理参数
 for i_num_dataset = 1:num_dataset
@@ -91,9 +94,12 @@ for i_num_dataset = 1:num_dataset
     % 自动计算最接近目标波长的索引位置
     [~, location_wavelength_start] = min(abs(wavelength - wavelength_start));
     [~, location_wavelength_end] = min(abs(wavelength - wavelength_end));
-    mean_sample_all_spectra_all = []; % 存储所有样本的平均光谱数据
-    matrix_white_reference = [];      % 存储所有样本的白参考光谱数据
+    
     % --- 新增代码结束 ---
+
+    % 【修复】每次循环开始前清空当前文件的临时变量
+    mean_sample_all_spectra = []; 
+    white_reference = [];
   
     % 去除起始和结束的光谱点比例
     num_start = 0;
@@ -161,9 +167,9 @@ for i_num_dataset = 1:num_dataset
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
-            % 剔除第10列中大于10000的行
-            Stvalue = ith_sample_spectra(:,10); %第10列数据
-            DeletPointPosition = find(Stvalue > 10000);
+            % 剔除第10列中大于30000的行
+            Stvalue = ith_sample_spectra(:,30); %第10列数据
+            DeletPointPosition = find(Stvalue > 30000);
             ith_sample_spectra(DeletPointPosition,:) = [];
             DeletPointPosition = [];
     
@@ -198,9 +204,9 @@ for i_num_dataset = 1:num_dataset
     
     
     mean_sample_all_spectra_all= [mean_sample_all_spectra_all; mean_sample_all_spectra];
-    mean_sample_all_spectra = [];
+
     matrix_white_reference = [matrix_white_reference; white_reference];
-    white_reference = [];
+
 end
 
 % %%% 光谱预处理
@@ -223,7 +229,17 @@ Y_all = statistics_all(:,3);
 % 确保用于分类筛选的Y也是完整的（防止多文件读取时的bug）
 Y = Y_all; 
 % --- 新增代码结束 ---
-     
+ 
+% !!! 新增筛选：只保留标签为1(正常)和7(水脱)的样本，剔除中间值4，防止拉低总准确率 !!!
+valid_idx = find(Y_all == 1 | Y_all == 7);
+Y_all = Y_all(valid_idx);
+Xpreprocess = Xpreprocess(valid_idx, :);
+
+% 如果是单文件运行，此时Y变量可能已经是完整的
+Y = Y_all; 
+% --- 新增代码结束 ---
+% ...existing code...
+    
 %%% 分类别处理
 % 1类样本,7类样本
 num_normal = find(Y==1);  % 正常样本1类别（哪些行）
@@ -233,19 +249,42 @@ Y_normal = Y(num_normal,:);            % 正常样本1类别标签
 X_moldy = Xpreprocess(num_moldy,:);    % 霉变样本7类别数据
 Y_moldy = Y(num_moldy,:);              % 霉变样本7类别标签
 
-% 如果正常样本数量比霉变样本多30个以上，则只取霉变样本数量的正常样本
-if length(num_normal)>length(num_moldy)+30
-    X_normal_part = X_normal(1:length(num_moldy),:);
-    Y_normal_part = Y_normal(1:length(num_moldy));
+% 如果正常样本数量比水脱样本多30个以上，则只取霉变样本数量的正常样本
+% if-else就是判断语句了，如果符合if的条件，那么就进if的代码，不然就进else
+% if的条件↓，如果正常样本数量比水脱样本多30个以上，那么就把正常数据的量截取成和水脱数据的量一样多，这个叫下采样
+n_normal = length(num_normal)
+n_moldy = length(num_moldy)
+
+if n_normal > n_moldy % 如果正常的比水脱的多
+    X_normal_part = X_normal(1:n_moldy,:);
+    Y_normal_part = Y_normal(1:n_moldy);
     X = [X_normal_part;X_moldy];
     Y = [Y_normal_part;Y_moldy];
-else
-    % 强制截取霉变样本，使其数量等于正常样本的数量
-    X_moldy_part = X_moldy(1:length(num_normal),:);
-    Y_moldy_part = Y_moldy(1:length(num_normal));
+elseif n_normal < n_moldy % 如果正常的比水脱的少
+    X_moldy_part = X_moldy(1:n_normal,:);
+    Y_moldy_part = Y_moldy(1:n_normal);
     X = [X_normal;X_moldy_part];
     Y = [Y_normal;Y_moldy_part];
+else %如果二者一样多，直接合并
+    X = [X_normal ;X_moldy_part];
+    Y = [Y_normal;Y_moldy_part];
 end
+% if length(num_normal)>length(num_moldy)+30
+%     X_normal_part = X_normal(1:length(num_moldy),:);
+%     Y_normal_part = Y_normal(1:length(num_moldy));
+%     X = [X_normal_part;X_moldy];
+%     Y = [Y_normal_part;Y_moldy];
+% else
+%     % 那我们想想如果不符合“正常>水脱+30”这个条件，还会有哪些情况呢
+%     % 1.正常比水脱的多，但是没多到30
+%     % 2.正常比水脱的少
+%     % 而这里的else的代码是将水脱的样本截取到和正常的一样多，也就是没考虑1
+%     % 强制截取水脱样本，使其数量等于正常样本的数量
+%     X_moldy_part = X_moldy(1:length(num_normal),:);
+%     Y_moldy_part = Y_moldy(1:length(num_normal));
+%     X = [X_normal;X_moldy_part];
+%     Y = [Y_normal;Y_moldy_part];
+% end
 
 % 检查逻辑
 disp(['X的大小: ', num2str(size(X))]);
@@ -266,10 +305,10 @@ error_specific = 0.5;  % 错误容忍度
 % [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y,error_specific);
 % [result,result_ud,model,~,~]=C_get_pls_da_model_all_APP(X,Y,Xpreprocess,Y_all,error_specific);
 [result, result_ud, model, matrix_num_delet, Y_pred_all_matrix] = C_get_pls_da_model_all_APP(X, Y, Xpreprocess, Y_all, error_specific); % 捕获所有输出参数
-
+% 到这里所有模型相关的代码就都结束啦
 display('PLS-DA模型建立与预测完成');
 
-%% === 结果展示部分 ===
+%% === 结果展示部分 ===这部分都是结果的显示，文本和绘图
 
 % 1. 文本输出：详细统计指标
 fprintf('\n==================== PLS-DA 模型结果报告 ====================\n');
