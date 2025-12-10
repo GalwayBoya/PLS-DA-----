@@ -34,8 +34,11 @@ num_mes_file  = (j);
 
 
 % 选择特定的数据集
-selected_str = {'Data_6-8-7-P1-P3.csv'};
+selected_str = {'Data_10-1-41-P1-P3.csv','Data_6-8-7-P1-P3.csv'};
 num_dataset = length(selected_str);  
+
+mean_sample_all_spectra_all = []; % 存储所有样本的平均光谱数据
+matrix_white_reference = [];      % 存储所有样本的白参考光谱数据
 
 % 光谱数据预处理参数
 for i_num_dataset = 1:num_dataset
@@ -91,9 +94,12 @@ for i_num_dataset = 1:num_dataset
     % 自动计算最接近目标波长的索引位置
     [~, location_wavelength_start] = min(abs(wavelength - wavelength_start));
     [~, location_wavelength_end] = min(abs(wavelength - wavelength_end));
-    mean_sample_all_spectra_all = []; % 存储所有样本的平均光谱数据
-    matrix_white_reference = [];      % 存储所有样本的白参考光谱数据
+    
     % --- 新增代码结束 ---
+
+    % 【修复】每次循环开始前清空当前文件的临时变量
+    mean_sample_all_spectra = []; 
+    white_reference = [];
   
     % 去除起始和结束的光谱点比例
     num_start = 0;
@@ -198,9 +204,9 @@ for i_num_dataset = 1:num_dataset
     
     
     mean_sample_all_spectra_all= [mean_sample_all_spectra_all; mean_sample_all_spectra];
-    mean_sample_all_spectra = [];
+
     matrix_white_reference = [matrix_white_reference; white_reference];
-    white_reference = [];
+
 end
 
 % %%% 光谱预处理
