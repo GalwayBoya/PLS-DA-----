@@ -34,7 +34,9 @@ num_mes_file  = (j);
 
 
 % 选择特定的数据集
-selected_str = {'Data_10-1-41-P1-P3.csv','Data_6-8-7-P1-P3.csv'};
+selected_str = {'Data_6-8-7-P1-P3.csv','Data_9-1-20-P1-P3.csv','Data_10-1-41-P1-P3.csv','Data_10-42-70-P1-P3.csv',
+'Data_11-1-35-P1.csv','Data_11-1-35-P2-P3.csv','Data_11-36-50-P1-P3.csv','Data_11-90-123-P1-P3.csv'
+};
 num_dataset = length(selected_str);  
 
 mean_sample_all_spectra_all = []; % 存储所有样本的平均光谱数据
@@ -239,7 +241,7 @@ Xpreprocess = Xpreprocess(valid_idx, :);
 Y = Y_all; 
 % --- 新增代码结束 ---
 % ...existing code...
-    
+
 %%% 分类别处理
 % 1类样本,7类样本
 num_normal = find(Y==1);  % 正常样本1类别（哪些行）
