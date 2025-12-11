@@ -223,7 +223,8 @@ Xpreprocess = average_moving(Xpreprocess,segment);
 
 %%% 归一化
 % 所有值除以各自行的范数（最大值）
-[~, ~,~,~,Xpreprocess,~]=Normalize(Xpreprocess,Xpreprocess);
+% [~, ~,~,~,Xpreprocess,~]=Normalize(Xpreprocess,Xpreprocess);
+[~, ~,~,~,Xpreprocess,~]=SNV(Xpreprocess,Xpreprocess);
 
 % --- 新增代码：获取完整的标签向量，用于后续作为预测集的真值 ---
 Y_all = statistics_all(:,3); 
@@ -258,15 +259,29 @@ n_normal = length(num_normal)
 n_moldy = length(num_moldy)
 
 if n_normal > n_moldy % 如果正常的比水脱的多
-    X_normal_part = X_normal(1:n_moldy,:);
-    Y_normal_part = Y_normal(1:n_moldy);
-    X = [X_normal_part;X_moldy];
-    Y = [Y_normal_part;Y_moldy];
+    % 方案：复制水脱样本（过采样）
+    rep_count = ceil(n_normal / n_moldy);
+    X_moldy_over = repmat(X_moldy, rep_count, 1);
+    Y_moldy_over = repmat(Y_moldy, rep_count, 1);
+    % 截取
+    X_moldy_over = X_moldy_over(1:n_normal, :);
+    Y_moldy_over = Y_moldy_over(1:n_normal, :);
+    
+    X = [X_normal; X_moldy_over];
+    Y = [Y_normal; Y_moldy_over];
+
 elseif n_normal < n_moldy % 如果正常的比水脱的少
-    X_moldy_part = X_moldy(1:n_normal,:);
-    Y_moldy_part = Y_moldy(1:n_normal);
-    X = [X_normal;X_moldy_part];
-    Y = [Y_normal;Y_moldy_part];
+    % 方案：复制正常样本（过采样）
+    rep_count = ceil(n_moldy / n_normal);
+    X_normal_over = repmat(X_normal, rep_count, 1);
+    Y_normal_over = repmat(Y_normal, rep_count, 1);
+    % 截取
+    X_normal_over = X_normal_over(1:n_moldy, :);
+    Y_normal_over = Y_normal_over(1:n_moldy, :);
+    
+    X = [X_normal_over; X_moldy];
+    Y = [Y_normal_over; Y_moldy];
+
 else %如果二者一样多，直接合并
     X = [X_normal ;X_moldy_part];
     Y = [Y_normal;Y_moldy_part];
