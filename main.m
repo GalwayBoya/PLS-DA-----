@@ -224,7 +224,8 @@ Xpreprocess = average_moving(Xpreprocess,segment);
 %%% 归一化
 % 所有值除以各自行的范数（最大值）
 % [~, ~,~,~,Xpreprocess,~]=Normalize(Xpreprocess,Xpreprocess);
-[~, ~,~,~,Xpreprocess,~]=SNV(Xpreprocess,Xpreprocess);
+% [~, ~,~,~,Xpreprocess,~]=SNV(Xpreprocess,Xpreprocess);
+[~, ~,~,~,Xpreprocess,~]=FirstDerivative(Xpreprocess,Xpreprocess);
 
 % --- 新增代码：获取完整的标签向量，用于后续作为预测集的真值 ---
 Y_all = statistics_all(:,3); 
@@ -257,6 +258,21 @@ Y_moldy = Y(num_moldy,:);              % 霉变样本7类别标签
 % if的条件↓，如果正常样本数量比水脱样本多30个以上，那么就把正常数据的量截取成和水脱数据的量一样多，这个叫下采样
 n_normal = length(num_normal)
 n_moldy = length(num_moldy)
+
+% if n_normal > n_moldy % ???????????????
+%     X_normal_part = X_normal(1:n_moldy,:);
+%     Y_normal_part = Y_normal(1:n_moldy);
+%     X = [X_normal_part;X_moldy];
+%     Y = [Y_normal_part;Y_moldy];
+% elseif n_normal < n_moldy % ????????????????
+%     X_moldy_part = X_moldy(1:n_normal,:);
+%     Y_moldy_part = Y_moldy(1:n_normal);
+%     X = [X_normal;X_moldy_part];
+%     Y = [Y_normal;Y_moldy_part];
+% else %如果二者一样多，直接合并
+%     X = [X_normal ;X_moldy_part];
+%     Y = [Y_normal;Y_moldy_part];
+% end
 
 if n_normal > n_moldy % 如果正常的比水脱的多
     % 方案：复制水脱样本（过采样）
