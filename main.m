@@ -6,7 +6,7 @@ clear all;
 clc;
 
 % 参数设置
-A = 10; % 计算10个潜变量（主成分） % A、K可以改，但是会复杂一点，涉及主成分分析，先不动吧
+A = 17; % 计算10个潜变量（主成分） % A、K可以改，但是会复杂一点，涉及主成分分析，先不动吧
 % A = 3; 
 K = 5;
 % K = 2;
@@ -34,8 +34,7 @@ num_mes_file  = (j);
 
 
 % 选择特定的数据集
-selected_str = {'Data_6-8-7-P1-P3.csv','Data_9-1-20-P1-P3.csv','Data_10-1-41-P1-P3.csv','Data_10-42-70-P1-P3.csv',
-'Data_11-1-35-P1.csv','Data_11-1-35-P2-P3.csv','Data_11-36-50-P1-P3.csv','Data_11-90-123-P1-P3.csv'
+selected_str = {'Data_6-8-7-P1-P3.csv','Data_9-1-20-P1-P3.csv','Data_10-1-41-P1-P3.csv','Data_10-42-70-P1-P3.csv','Data_11-1-35-P1.csv','Data_11-1-35-P2-P3.csv','Data_11-36-50-P1-P3.csv','Data_11-90-123-P1-P3.csv'
 };
 num_dataset = length(selected_str);  
 
