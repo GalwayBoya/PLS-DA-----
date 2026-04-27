@@ -11,7 +11,7 @@ function [result,result_ud,model,matrix_num_delet,matrix_ypred_pre]=C_get_pls_da
 [Mxt Nxt]=size(Xt);
 
 %+++ check effectiveness of A.
-A=20;
+try A=evalin('caller', 'A'); catch, A=20; end
 
 %+++ data pretreatment
 [Xs,xpara1,xpara2]=pretreat(X,'center');
@@ -40,7 +40,8 @@ y_model_da = zeros(Mx,1);% 用于存PLS-DA的校正集标签
 yt_model_da = zeros(Mxt,1);% 用于存PLS-DA的预测集标签
 
 % 得到模型预测值
-for i=1:20
+% for i=1:20 原来的逻辑
+for i=1:A
 y_model=x_expand*coef(:,i); % 校正集模型预测值
 yt_model=xt_expand*coef(:,i); % 预测集模型预测值
 

@@ -6,7 +6,7 @@ clear all;
 clc;
 
 % 参数设置
-A = 17; % 计算10个潜变量（主成分） % A、K可以改，但是会复杂一点，涉及主成分分析，先不动吧
+A = 25; % 计算10个潜变量（主成分） % A、K可以改，但是会复杂一点，涉及主成分分析，先不动吧
 % A = 3; 
 K = 5;
 % K = 2;
@@ -393,7 +393,7 @@ xlabel('潜变量个数 (Latent Variables)');
 ylabel('交叉验证准确率 (%)');
 title(['交叉验证结果 (最佳 LV = ' num2str(n) ')']);
 grid on;
-legend('准确率曲线', '最佳LV');
+legend('准确率曲线', '最佳LV', 'Location', 'northwest');
 
 % 图2：预测集分类效果散点图
 Y_pred_final = Y_pred_all_matrix(:, n); % 获取最佳LV下的预测值
